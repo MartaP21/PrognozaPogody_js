@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Pogodynka-Zaliczenie</title>
+    <style>
+      .loader {
+        justify-content: center;
+        display: none;
+      }
+      .loader.visible {
+        display: flex;
+      }
+      .ikonka {
+        width: 50px;
+        height: 50px;
+        border: whitesmoke;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="przycisk">Pobierz prognozę pogody dla miasta BIAŁYSTOK!</button>
+    <div id="loader" class="loader">
+      <img src="img/loading.svg" />
+    </div>
+    <h2>Pogoda aktualna</h2>
+    <div class="pogodaAktualna">
+      <div>
+        Temperatura: <span><img class="ikonka" /></span
+        ><span class="temp"></span>
+      </div>
+      <div>Zachmurzenie: <span class="zachmurzenie"></span></div>
+      <div>Kierunek wiatru: <span class="kierunekWiatru"></span></div>
+    </div>
+    <h2>Prognoza na jutro</h2>
+    <div class="pogodaJutro">
+      <div>
+        Temperatura: <span><img class="ikonka" /></span
+        ><span class="temp"></span>
+      </div>
+      <div>Zachmurzenie: <span class="zachmurzenie"></span></div>
+      <div>Kierunek wiatru: <span class="kierunekWiatru"></span></div>
+    </div>
+    <h2>Prognoza w zależności od lokalizacji</h2>
+    <div>
+      <div><button class="miasto">Pobierz listę miast</button></div>
+      <br />
+      <div id="tblData"></div>
+      <br />
+    </div>
+    <h2>Wyszukaj miasto</h2>
+    <div>
+      <div>
+        <input type="text" id="wyszukaj" /><button class="szukaj">
+          Pokaż miasta
+        </button>
+      </div>
+      <br />
+      <div id="tblData2"></div>
+      <br />
+    </div>
+
+    <script>
+      let loader = document.querySelector("#loader");
+      let ikonka = document.querySelector(".pogodaAktualna .ikonka");
+      let ikonka2 = document.querySelector(".pogodaJutro .ikonka");
+      let elementDzisTemp = document.querySelector(".pogodaAktualna .temp");
+      let elementDzisZachmurzenie = document.querySelector(
+        ".pogodaAktualna .zachmurzenie"
+      );
+      let elementDziśKierunekWiatru = document.querySelector(
+        ".pogodaAktualna .kierunekWiatru"
+      );
+
+      let elementJutroTemp = document.querySelector(".pogodaJutro .temp");
+      let elementJutroZachmurzenie = document.querySelector(
+        ".pogodaJutro .zachmurzenie"
+      );
+      let elementJutroKierunekwiatru = document.querySelector(
+        ".pogodaJutro .kierunekWiatru"
+      );
+
+      let elementPrzycisk = document.querySelector("#przycisk");
+
+      function clearElement(element) {
+        element.innerHTML = "";
+      }
+
+      function addElement(content, className, parent) {
+        let element = document.createElement("button");
+        element.innerHTML = content;
+        element.className = className;
+        if (parent) {
+          parent.appendChild(element);
+        }
+
+        return element;
+      }
+
+      elementPrzycisk.addEventListener("click", function () {
+        loader.classList.add("visible");
+        fetch("https://weather-api-alpha.herokuapp.com/pogoda/prognoza?miasto=bialystok").then(
+          function (response) {
+            response.json().then(function (dane) {
+              //Pobiera ikonki
+              ikonka.src = "img/" + dane.prognoza.dziś.ikonka + ".png";
+              ikonka.alt = dane.prognoza.dziś.ikonka;
+              //wyświetla pobrane wyniki jako prognozę pogody:
+              elementDzisTemp.innerHTML = " " + dane.prognoza.dziś.temperatura;
+              elementDzisZachmurzenie.innerHTML =
+                dane.prognoza.dziś.zachmurzenie + " %";
+              elementDziśKierunekWiatru.innerHTML =
+                dane.prognoza.dziś.wiatrKierunekSłownie;
+
+              ikonka2.src = "img/" + dane.prognoza.jutro.ikonka + ".png";
+              ikonka2.alt = dane.prognoza.jutro.ikonka;
+              elementJutroTemp.innerHTML =
+                " " + dane.prognoza.jutro.temperatura;
+              elementJutroZachmurzenie.innerHTML =
+                dane.prognoza.jutro.zachmurzenie + " %";
+              elementJutroKierunekwiatru.innerHTML =
+                dane.prognoza.jutro.wiatrKierunekSłownie;
+            });
+            loader.classList.remove("visible");
+          }
+        );
+      });
+
+      //pobiera listę miast i wrzuca w buttony, po kliknięciu w button wyświetla pogodę klikniętego miasta
+      let miasto = document.querySelector(".miasto");
+      let licznik = 0;
+      function pobierzMiasta() {
+
+        loader.classList.add("visible");
+        fetch("https://weather-api-alpha.herokuapp.com/pogoda/miasta").then(function (response) {
+          response.json().then(function (dane) {
+            console.log(dane);
+            clearElement(tblData);
+            for (let i = 0; i < dane.length; i++) {
+              let content = dane[i].nazwa;
+              loader.classList.remove("visible");
+              let przycisk = addElement(content, "miasta", tblData);
+              przycisk.addEventListener("click", function () {
+                loader.classList.add("visible");
+                fetch(
+                  "https://weather-api-alpha.herokuapp.com/pogoda/prognoza?miasto=" + content
+                ).then(function (response) {
+                  response.json().then(function (dane) {
+                    console.log(dane);
+                    ikonka.src = "img/" + dane.prognoza.dziś.ikonka + ".png";
+                    ikonka.alt = dane.prognoza.dziś.ikonka;
+                    elementDzisTemp.innerHTML =
+                      " " + dane.prognoza.dziś.temperatura;
+                    elementDzisZachmurzenie.innerHTML =
+                      dane.prognoza.dziś.zachmurzenie + " %";
+                    elementDziśKierunekWiatru.innerHTML =
+                      dane.prognoza.dziś.wiatrKierunekSłownie;
+                    ikonka2.src = "img/" + dane.prognoza.jutro.ikonka + ".png";
+                    ikonka2.alt = dane.prognoza.jutro.ikonka;
+                    elementJutroTemp.innerHTML =
+                      " " + dane.prognoza.jutro.temperatura;
+                    elementJutroZachmurzenie.innerHTML =
+                      dane.prognoza.jutro.zachmurzenie + " %";
+                    elementJutroKierunekwiatru.innerHTML =
+                      dane.prognoza.jutro.wiatrKierunekSłownie;
+                  });
+                });
+                loader.classList.remove("visible");
+              });
+            }
+          });
+        });
+      }
+      document
+        .querySelector(".miasto")
+        .addEventListener("click", pobierzMiasta);
+
+      //Wyszukiwarka miast po wprowadzanym tekście
+      let wyszukaj = document.querySelector("#wyszukaj");
+      wyszukaj.addEventListener("change", function (event) {
+        console.log("Wartość:", event.target.value);
+        clearElement(tblData2);
+        fetch(
+          "https://weather-api-alpha.herokuapp.com/pogoda/miasta?szukaj=" + event.target.value
+        ).then(function (response) {
+          response.json().then(function (dane) {
+            console.log(dane);
+            for (let i = 0; i < dane.length; i++) {
+              let content = dane[i].nazwa;
+              let przycisk = addElement(content, "miasta", tblData2);
+              przycisk.addEventListener("click", function () {
+                fetch(
+                  "https://weather-api-alpha.herokuapp.com/pogoda/prognoza?miasto=" + content
+                ).then(function (response) {
+                  response.json().then(function (dane) {
+                    console.log(dane);
+                    ikonka.src = "img/" + dane.prognoza.dziś.ikonka + ".png";
+                    ikonka.alt = dane.prognoza.dziś.ikonka;
+                    elementDzisTemp.innerHTML =
+                      " " + dane.prognoza.dziś.temperatura;
+                    elementDzisZachmurzenie.innerHTML =
+                      dane.prognoza.dziś.zachmurzenie + " %";
+                    elementDziśKierunekWiatru.innerHTML =
+                      dane.prognoza.dziś.wiatrKierunekSłownie;
+                    ikonka2.src = "img/" + dane.prognoza.jutro.ikonka + ".png";
+                    ikonka2.alt = dane.prognoza.jutro.ikonka;
+                    elementJutroTemp.innerHTML =
+                      " " + dane.prognoza.jutro.temperatura;
+                    elementJutroZachmurzenie.innerHTML =
+                      dane.prognoza.jutro.zachmurzenie + " %";
+                    elementJutroKierunekwiatru.innerHTML =
+                      dane.prognoza.jutro.wiatrKierunekSłownie;
+                  });
+                });
+              });
+            }
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
